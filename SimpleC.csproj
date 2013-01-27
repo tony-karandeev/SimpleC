@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{043EF514-440A-4527-BF6A-0681EB349FA9}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SimpleC</RootNamespace>
+    <AssemblyName>SimpleC</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.1.3.42154, Culture=neutral, PublicKeyToken=3a9cab8f8d22bfb7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\.net\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="IdentAstNode.cs" />
+    <Compile Include="TypeSpec.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="ParserBaseException.cs" />
+    <Compile Include="IdentDescr.cs" />
+    <Compile Include="SimpleCInterpreter.cs" />
+    <Compile Include="VarDescr.cs" />
+    <Compile Include="AstNode.cs" />
+    <Compile Include="NumAstNode.cs" />
+    <Compile Include="VarDefAstNode.cs" />
+    <Compile Include="AstNodePrinter.cs" />
+    <Compile Include="IntepreterException.cs" />
+    <Compile Include="VarSpecAstNode.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Input.txt" />
+  </ItemGroup>
+  <PropertyGroup>
+    <AntlrGrammarFile>"SimpleC.g"</AntlrGrammarFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <AntlrGrammarFile Include="SimpleC.g" />
+  </ItemGroup>
+  <PropertyGroup>
+    <AntlrLexerFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Lexer.cs')</AntlrLexerFile>
+    <AntlrParserFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Parser.cs')</AntlrParserFile>
+    <AntlrTokensFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename).tokens')</AntlrTokensFile>
+    <AntlrGrammarEncoding>Windows-1251</AntlrGrammarEncoding>
+    <AntlrTempDir>antlr_temp_dir</AntlrTempDir>
+    <AntlrTempGrammarFile>$(AntlrGrammarFile)</AntlrTempGrammarFile>
+    <AntlrTempLexerFile>@(AntlrGrammarFile->'$(AntlrTempDir)\%(Filename)Lexer.cs')</AntlrTempLexerFile>
+    <AntlrTempParserFile>@(AntlrGrammarFile->'$(AntlrTempDir)\%(Filename)Parser.cs')</AntlrTempParserFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(AntlrLexerFile)">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>@(AntlrGrammarFile)</DependentUpon>
+    </Compile>
+    <Compile Include="$(AntlrParserFile)">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>@(AntlrGrammarFile)</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <Target Name="GenerateAntlrCode" Inputs="@(AntlrGrammarFile)" Outputs="$(AntlrLexerFile);$(AntlrParserFile)">
+    <MakeDir Directories="$(AntlrTempDir)" />
+    <Exec Command="&quot;%JAVA_HOME%\bin\java&quot; -classpath lib\java\antlr-3.2.jar org.antlr.Tool -message-format vs2005 $(AntlrGrammarFile)" />
+    <Delete Files="$(AntlrTokensFile)" />
+    <RemoveDir Directories="$(AntlrTempDir)" />
+  </Target>
+  <Target Name="CleanAntlrCode">
+    <Delete Files="$(AntlrLexerFile);$(AntlrParserFile)" />
+  </Target>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <BuildDependsOn>GenerateAntlrCode;$(BuildDependsOn)</BuildDependsOn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RebuildDependsOn>CleanAntlrCode;$(RebuildDependsOn)</RebuildDependsOn>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,10 @@
+
+void g();
+
+void f(int a, int b, int c, int d)
+{
+	{
+		a[5].b++->c && b || 0;
+	}
+		a = a * b || c | d;
+}
