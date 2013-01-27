@@ -66,20 +66,17 @@
     <Content Include="Input.txt" />
   </ItemGroup>
   <PropertyGroup>
-    <AntlrGrammarFile>"SimpleC.g"</AntlrGrammarFile>
+    <AntlrGrammarFile>"Grammar\SimpleC.g"</AntlrGrammarFile>
   </PropertyGroup>
   <ItemGroup>
-    <AntlrGrammarFile Include="SimpleC.g" />
+    <AntlrGrammarFile Include="Grammar\SimpleC.g" />
   </ItemGroup>
   <PropertyGroup>
     <AntlrLexerFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Lexer.cs')</AntlrLexerFile>
     <AntlrParserFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Parser.cs')</AntlrParserFile>
     <AntlrTokensFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename).tokens')</AntlrTokensFile>
     <AntlrGrammarEncoding>Windows-1251</AntlrGrammarEncoding>
-    <AntlrTempDir>antlr_temp_dir</AntlrTempDir>
     <AntlrTempGrammarFile>$(AntlrGrammarFile)</AntlrTempGrammarFile>
-    <AntlrTempLexerFile>@(AntlrGrammarFile->'$(AntlrTempDir)\%(Filename)Lexer.cs')</AntlrTempLexerFile>
-    <AntlrTempParserFile>@(AntlrGrammarFile->'$(AntlrTempDir)\%(Filename)Parser.cs')</AntlrTempParserFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(AntlrLexerFile)">
@@ -94,10 +91,8 @@
     </Compile>
   </ItemGroup>
   <Target Name="GenerateAntlrCode" Inputs="@(AntlrGrammarFile)" Outputs="$(AntlrLexerFile);$(AntlrParserFile)">
-    <MakeDir Directories="$(AntlrTempDir)" />
     <Exec Command="&quot;%JAVA_HOME%\bin\java&quot; -classpath lib\java\antlr-3.2.jar org.antlr.Tool -message-format vs2005 $(AntlrGrammarFile)" />
     <Delete Files="$(AntlrTokensFile)" />
-    <RemoveDir Directories="$(AntlrTempDir)" />
   </Target>
   <Target Name="CleanAntlrCode">
     <Delete Files="$(AntlrLexerFile);$(AntlrParserFile)" />
