@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
-	interface ISCNode
+	public interface ISCNode
 	{
 		void Print(string indent);
 	}

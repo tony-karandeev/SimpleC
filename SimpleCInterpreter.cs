@@ -3,7 +3,7 @@ using System.Globalization;
 
 using Antlr.Runtime.Tree;
 
-using AstNodeType = SimpleC.SimpleCParser;
+using AstNodeType = SimpleC.Grammar.SimpleCParser;
 
 
 namespace SimpleC
@@ -20,7 +20,7 @@ namespace SimpleC
         {
 			if (programNode.Type != AstNodeType.PROGRAM)
 			{
-				Console.Error.WriteLine(String.Format("Node: {0}", SimpleCParser.tokenNames[programNode.Type]));
+				Console.Error.WriteLine(String.Format("Node: {0}", Grammar.SimpleCParser.tokenNames[programNode.Type]));
 				throw new IntepreterException("AST-дерево не является программой");
 			}
 

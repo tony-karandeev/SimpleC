@@ -21,16 +21,23 @@ namespace SimpleC
 				// либо файл с именем, переданным первым параметром, либо стандартный ввод
 				ICharStream input = args.Length == 1 ? (ICharStream)new ANTLRFileStream(args[0])
 													 : (ICharStream)new ANTLRReaderStream(Console.In);
-				SimpleCLexer lexer = new SimpleCLexer(input);
+				Grammar.SimpleCLexer lexer = new Grammar.SimpleCLexer(input);
 				CommonTokenStream tokens = new CommonTokenStream(lexer);
-				SimpleCParser parser = new SimpleCParser(tokens);
+				Grammar.SimpleCParser parser = new Grammar.SimpleCParser(tokens);
 				ITree program = (ITree)parser.program().Tree;
 //				AstNodePrinter.Print(program);
 //				Console.WriteLine();
 //				SimpleCIntepreter.Execute(program);
 
-				CommonTreeNodeStream stream = new CommonTreeNodeStream(program);
-				
+				CommonTreeNodeStream nodeStream = new CommonTreeNodeStream(program);
+
+				Grammar.SimpleCTreeWalker treeWalker = new Grammar.SimpleCTreeWalker(nodeStream);
+				Tree.RootNode rootNode = treeWalker.walk();
+
+				if (rootNode == null)
+					Console.WriteLine("NULL");
+				else
+					rootNode.Print();
 
 				Console.ReadLine();
 			}

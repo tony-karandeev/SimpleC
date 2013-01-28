@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
-	class TypeSpecNode : ISCNode
+	public class TypeSpecNode : ISCNode
 	{
 		public string PrimaryTypeName { get; set; }
 

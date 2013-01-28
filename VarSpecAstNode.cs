@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Antlr.Runtime;
-using AstNodeType = SimpleC.SimpleCParser;
+using AstNodeType = SimpleC.Grammar.SimpleCParser;
 
 namespace SimpleC
 {

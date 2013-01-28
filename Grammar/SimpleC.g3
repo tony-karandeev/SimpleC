@@ -1,8 +1,10 @@
-grammar SimpleC;
+﻿grammar SimpleC;
 
 options {
-  language=CSharp2;
-  output=AST;
+	language=CSharp3;
+	TokenLabelType=CommonToken;
+	output=AST;
+	ASTLabelType=CommonTree;
 }
 
 tokens {
@@ -75,180 +77,21 @@ tokens {
 	SHIFT_RIGHT   = '>>';
 }
 
-@lexer::namespace { SimpleC }
-@parser::namespace { SimpleC }
+@lexer::namespace { SimpleC.Grammar }
+@parser::namespace { SimpleC.Grammar }
 
-@parser::header { 
-	using System.Collections.Generic; 
-	using System.Diagnostics;
+@lexer::header {
+#pragma warning disable 3021
 }
 
-@parser::members
-{
-        bool IsRightToLeft( int type )
-        {
-                switch ( type )
-                {
-				case INC_POST:
-				case DEC_POST:
-					return false;
-				case DEREF:
-				case U_PLUS:
-				case U_MINUS:
-				case BIT_NOT:
-				case INC_PRE:
-				case DEC_PRE:
-				case BOOL_NOT:
-				case TYPECAST:
-				case SIZEOF_EXPR:
-				case SIZEOF_TYPE:
-					return true;
-				case MUL:
-				case DIV:
-				case MOD:
-				case ADD:
-				case SUB:
-				case SHIFT_LEFT:
-				case SHIFT_RIGHT:
-				case LESS:
-				case GREATER:
-				case LESS_OR_EQUAL:
-				case GREATER_OR_EQUAL:
-				case EQUAL:
-				case NOT_EQUAL:
-				case BIT_AND:
-				case BIT_XOR:
-				case BIT_OR:
-				case BOOL_AND:
-				case BOOL_OR:
-					return false;
-				case ASSIGN:
-					return true;
-                default:
-					throw new Exception(String.Format("Unexpected operator: {0}", SimpleCParser.tokenNames[type]));
-                }
-
-        }
-        int OperatorPrecedence(int type)
-        {
-                switch (type)
-                {
-				case INC_POST:
-				case DEC_POST:
-					return 1;
-				case DEREF:
-				case U_PLUS:
-				case U_MINUS:
-				case BIT_NOT:
-				case INC_PRE:
-				case DEC_PRE:
-				case BOOL_NOT:
-				case TYPECAST:
-				case SIZEOF_EXPR:
-				case SIZEOF_TYPE:
-					return 2;
-				case MUL:
-				case DIV:
-				case MOD:
-					return 3;
-				case ADD:
-				case SUB:
-					return 4;
-				case SHIFT_LEFT:
-				case SHIFT_RIGHT:
-					return 5;
-				case LESS:
-				case GREATER:
-				case LESS_OR_EQUAL:
-				case GREATER_OR_EQUAL:
-					return 6;
-				case EQUAL:
-				case NOT_EQUAL:
-					return 7;
-				case BIT_AND:
-					return 8;
-				case BIT_XOR:
-					return 9;
-				case BIT_OR:
-					return 10;
-				case BOOL_AND:
-					return 11;
-				case BOOL_OR:
-					return 12;
-				case ASSIGN:
-					return 13;
-                default:
-					throw new Exception(String.Format("Unexpected operator {0}: {1}", type, SimpleCParser.tokenNames[type]));
-                }
-        }
-        int FindPivot(List<IToken> operators, int startIndex, int stopIndex)
-		{
-            int pivotIndex = startIndex;
-            int pivotPriority = OperatorPrecedence(operators[pivotIndex].Type);
-            for (int operatorIndex = startIndex; operatorIndex < stopIndex; ++operatorIndex)
-            {
-                    int type = operators[operatorIndex].Type;
-                    int currentOperatorPriority = OperatorPrecedence(type);
-                    bool rightToLeft = IsRightToLeft(type);
-                    if (currentOperatorPriority > pivotPriority || (currentOperatorPriority == pivotPriority && rightToLeft))
-                    {
-                            pivotIndex = operatorIndex;
-                            pivotPriority = currentOperatorPriority;
-                    }
-            }
-            return pivotIndex;
-        }
-        ITree CreatePrecedenceTree(List<ITree> expressions, List<IToken> operators, int startIndex, int stopIndex)
-        {
-                if (stopIndex == startIndex)
-                        return expressions[startIndex];
-
-                int pivotIndex = FindPivot(operators, startIndex, stopIndex);
-                ITree root = (ITree)adaptor.GetNilNode();
-                object root_1 = (object)adaptor.GetNilNode();
-                root_1 = (object)adaptor.BecomeRoot(operators[pivotIndex], root_1);
-                adaptor.AddChild(root_1, CreatePrecedenceTree(expressions, operators, startIndex, pivotIndex));
-                adaptor.AddChild(root_1, CreatePrecedenceTree(expressions, operators, pivotIndex + 1, stopIndex));
-                adaptor.AddChild(root, root_1);
-                return root;
-        }
-        ITree CreatePrecedenceTree(List<ITree> expressions, List<IToken> operators)
-        {
-			Console.WriteLine(String.Format("EXPRESSIONS COUNT: {0}", expressions.Count));
-			string exprs = expressions[0] == null ? "<nullexpr>" : expressions[0].ToStringTree();
-			for (int i = 1; i < expressions.Count; ++i)
-			{
-				exprs += " ## " + (expressions[i] == null ? "<nullexpr>" : expressions[i].ToStringTree());
-			}
-			Console.WriteLine("EXPRESSIONS: " + exprs);
-            return CreatePrecedenceTree(expressions, operators, 0, operators.Count);
-        }
-
-        ITree CreatePrimaryPrecedenceTree(List<ITree> expressions, List<IToken> operators, int startIndex, int stopIndex)
-		{
-			if (stopIndex == startIndex)
-				return expressions[stopIndex];
-
-			ITree root = (ITree)adaptor.GetNilNode();
-			object root_1 = (object)adaptor.GetNilNode();
-
-			root_1 = (object)adaptor.BecomeRoot(operators[stopIndex-1], root_1);
-			adaptor.AddChild(root_1, CreatePrimaryPrecedenceTree(expressions, operators, startIndex, stopIndex-1));
-			adaptor.AddChild(root_1, expressions[stopIndex]); // Does nothing if expressions[stopIndex] is null
-			adaptor.AddChild(root, root_1);
-			return root;
-		}
-
-		ITree CreatePrimaryPrecedenceTree(List<ITree> expressions, List<IToken> operators)
-		{
-			Debug.Assert(expressions.Count == operators.Count + 1, "Not enough expressions for building primary precedence tree");
-			return CreatePrimaryPrecedenceTree(expressions, operators, 0, operators.Count);
-		}
+@parser::header {
+#pragma warning disable 3021
 }
+
 
 Whitespace:
 	( ' ' | '\t' | '\f' | '\r' | '\n' )+ {
-		$channel=HIDDEN;
+		$channel=Hidden;
 	}
 ;
 
@@ -269,7 +112,9 @@ Identifier:
 //ASSIGN: '='     ;
 
 identifier:
-	Identifier -> { adaptor.BecomeRoot(new CommonToken(IDENT, $Identifier.Text), adaptor.GetNilNode()) }
+	Identifier -> { 
+		adaptor.BecomeRoot(new CommonToken(IDENT, $Identifier.Text), adaptor.Nil()) 
+	}
 ;
 
 varDef:
@@ -329,7 +174,6 @@ binaryExpr
 	(op=binaryOperator right=unaryExpr {
 		operators.Add(((CommonTree)op.Tree).Token);
 		expressions.Add((ITree)right.Tree);
-		Console.WriteLine(right.Tree == null ? "<nullexpr>" : ((ITree)right.Tree).ToString());
 	})*
 	-> { CreatePrecedenceTree(expressions, operators) }
 ;
@@ -445,7 +289,7 @@ binaryOperator:
 ;
 
 typeSpec:
-	identifier
+	identifier -> ^(TYPE_SPEC identifier)
 ;
 
 funcCall:
@@ -456,6 +300,7 @@ programStatement:
 	varDef | funcDecl | funcDef
 ;
 
+public
 program: 
 	programStatement* EOF
 	-> ^(PROGRAM programStatement*)

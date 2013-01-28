@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
-	class VarSpecNode :ISCNode
+	public class VarSpecNode : ISCNode
 	{
 		public TypeSpecNode TypeSpec { get; set; }
 		public string Name { get; set; }
@@ -13,7 +13,14 @@ namespace SimpleC.Tree
 		{
 			Console.WriteLine(indent + "VAR_SPEC");
 			Console.WriteLine(indent + "\t" + Name);
-			TypeSpec.Print(indent + "\t");
+			if (TypeSpec == null)
+			{
+				Console.WriteLine("TypeSpec == NULL");
+			}
+			else
+			{
+				TypeSpec.Print(indent + "\t");
+			}
 		}
 	}
 }

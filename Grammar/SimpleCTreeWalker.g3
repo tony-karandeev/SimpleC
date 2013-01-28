@@ -1,29 +1,37 @@
 ﻿tree grammar SimpleCTreeWalker;
 
 options {
+	language=CSharp3;
 	tokenVocab=SimpleC;
 	ASTLabelType=CommonTree;
 }
 
-@namespace {
-	SimpleC
-}
+@namespace { SimpleC.Grammar }
 
 @header {
-	using SimpleC.Tree;
+#pragma warning disable 3021
+using SimpleC.Tree;
 }
 
-walk returns [RootNode node]:
+public
+walk returns [RootNode node]
+@init {
+	node = new RootNode();
+}	:
+
 	^(PROGRAM (programStatement { node.Children.Add($programStatement.node); })*)
 ;
 
-programStatement returns [ISCNode node]:
-	varDef { node = $varDef.node; }
+programStatement returns [ISCNode node]
+	: varDef { node = $varDef.node; }
 	| funcDecl
 	| funcDef
 ;
 
-varDef returns [VarDefNode node]:
+varDef returns [VarDefNode node]
+@init {
+	node = new VarDefNode();
+}	: 
 	^(VAR_DEF varSpec) { node.VarSpec = $varSpec.node; }
 ;
 
@@ -39,14 +47,20 @@ paramSpecList:
 	^(PARAM_SPEC_LIST varSpec*)
 ;
 
-varSpec returns [VarSpecNode node]:
+varSpec returns [VarSpecNode node]
+@init {
+	node = new VarSpecNode();
+}	:
 	^(VAR_SPEC typeSpec IDENT) { 
 		node.TypeSpec = $typeSpec.node; 
 		node.Name = $IDENT.Text;
 	}
 ;
 
-typeSpec returns [TypeSpecNode node]:
+typeSpec returns [TypeSpecNode node]
+@init {
+	node = new TypeSpecNode();
+}	:
 	^(TYPE_SPEC IDENT) { 
 		node.PrimaryTypeName = $IDENT.Text; 
 	}
@@ -59,13 +73,13 @@ funcBody:
 statement:
 	varDef
 	| ^(STATEMENT expression?)
-	| ^(STATEMENT statement*)
+//	| ^(STATEMENT statement*)
 ;	
 
 expression:
 	// Binary expressions
 	^(ADD expression expression)
-	| ^(ADD expression expression)
+	| ^(SUB expression expression)
 	| ^(MUL expression expression)
 	| ^(DIV expression expression)
 	| ^(MOD expression expression)
@@ -90,7 +104,6 @@ expression:
 	| ^(U_PLUS expression)
 	| ^(U_MINUS expression)
 	| ^(BOOL_NOT expression)
-	| ^(BIT_NOT expression)
 	| ^(BIT_NOT expression)
 	| ^(INC_PRE expression)
 	| ^(DEC_PRE expression)

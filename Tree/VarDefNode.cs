@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
-	class VarDefNode : ISCNode
+	public class VarDefNode : ISCNode
 	{
 		public VarSpecNode VarSpec { get; set; }
 	

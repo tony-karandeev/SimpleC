@@ -17,10 +17,10 @@ rem set MSBUILD="%NET_HOME%\msbuild"
 rem set ANTLR=%JAVA% -classpath .;%CLASSPATH%;%ANTLR_JAR% org.antlr.Tool
 
 
-del .\Grammar\SimpleCLexer.cs
-del .\Grammar\SimpleCParser.cs
-del .\Grammar\SimpleCTreeWalker.cs
+rem del .\Grammar\SimpleCLexer.cs
+rem del .\Grammar\SimpleCParser.cs
+rem del .\Grammar\SimpleCTreeWalker.cs
 
-devenv SimpleC.csproj /build
+rem devenv SimpleC.csproj /build
 
 .\bin\Debug\SimpleC.exe < .\Input.txt

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
-	class RootNode : ISCNode
+	public class RootNode : ISCNode
 	{
 		public List<ISCNode> Children { get; set; }
 
@@ -23,7 +23,8 @@ namespace SimpleC.Tree
 		{
 			Console.WriteLine(indent + "ROOT");
 			foreach (ISCNode child in Children)
-				child.Print(indent + "\t");
+				if (child != null)
+					child.Print(indent + "\t");
 		}
 	}
 }
