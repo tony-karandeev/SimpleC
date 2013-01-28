@@ -19,6 +19,7 @@ tokens {
     FUNC_CALL           ;
 
     VAR_SPEC            ;
+	TYPE_SPEC           ;
 
     PARAM_SPEC_LIST     ;
     PARAM_LIST          ;
@@ -233,7 +234,7 @@ tokens {
 
 			root_1 = (object)adaptor.BecomeRoot(operators[stopIndex-1], root_1);
 			adaptor.AddChild(root_1, CreatePrimaryPrecedenceTree(expressions, operators, startIndex, stopIndex-1));
-			adaptor.AddChild(root_1, expressions[stopIndex]);
+			adaptor.AddChild(root_1, expressions[stopIndex]); // Does nothing if expressions[stopIndex] is null
 			adaptor.AddChild(root, root_1);
 			return root;
 		}
@@ -254,6 +255,9 @@ Whitespace:
 Number: 
 	('0'..'9')+ ('.' ('0'..'9')+)?
 ;
+
+SizeOf: 'sizeof';
+
 Identifier:  
 	( 'a'..'z' | 'A'..'Z' | '_' )
 	( 'a'..'z' | 'A'..'Z' | '_' | '0'..'9' )*
@@ -269,21 +273,27 @@ identifier:
 ;
 
 varDef:
-	varSpec ';' 	// { VarSpec vs = ((VarSpecAstNode)$varSpec.tree).VarSpec; }
+	varSpec ';'
+		-> ^(VAR_DEF varSpec)
+		 	// { VarSpec vs = ((VarSpecAstNode)$varSpec.tree).VarSpec; }
 //		->  VAR_DEF<VarDefAstNode>[((VarSpecAstNode)$varSpec.tree).VarSpec]
 ;
 
 funcDecl: 
-	typeName identifier '(' paramSpecList ')'';' -> ^(FUNC_DECL typeName identifier paramSpecList)
+	typeSpec identifier '(' paramSpecList ')'';' -> ^(FUNC_DECL typeSpec identifier paramSpecList)
 ;
 
 funcDef:
-	typeName identifier '(' paramSpecList ')''{' funcBody '}' 
-		-> ^(FUNC_DEF typeName identifier paramSpecList funcBody)
+	typeSpec identifier '(' paramSpecList ')''{' funcBody '}' 
+		-> ^(FUNC_DEF typeSpec identifier paramSpecList funcBody)
 ;
 
 funcBody:
-	statement* -> ^(FUNC_BODY statement*)
+	statements -> ^(FUNC_BODY statements?)
+;
+
+statements:
+	statement*
 ;
 
 paramSpecList:
@@ -291,8 +301,9 @@ paramSpecList:
 ;
 
 varSpec:
-    typeName identifier
-//		-> VAR_SPEC<VarSpecAstNode>[new TypeSpec($typeName.text), $identifier.Text]
+    typeSpec identifier
+		-> ^(VAR_SPEC typeSpec identifier)
+//		-> VAR_SPEC<VarSpecAstNode>[new TypeSpec($typeSpec.text), $identifier.Text]
 ;
 
 paramList:
@@ -302,7 +313,7 @@ paramList:
 statement:
 	varDef
 	| expr? ';' -> ^(STATEMENT expr?)
-	| '{' statement* '}' -> ^(STATEMENT statement*)
+	| '{' statements '}' -> ^(STATEMENT statements?)
 ;
 
 expr:
@@ -326,17 +337,17 @@ binaryExpr
 unaryExpr options {
 	backtrack=true;
 }	:
-	'*' un=unaryExpr -> ^(DEREF $un)
-	| '&' unaryExpr -> ^(REF $un)
-	| '+' unaryExpr -> ^(U_PLUS $un)
-	| '-' unaryExpr -> ^(U_MINUS $un)
-	| '!' unaryExpr -> ^(BOOL_NOT $un)
-	| '~' unaryExpr -> ^(BIT_NOT $un)
-	| '++' unaryExpr -> ^(INC_PRE $un)
-	| '--' unaryExpr -> ^(DEC_PRE $un)
-	| '(' tn=typeName ')' unaryExpr -> ^(TYPECAST $un $tn)
-	| 'sizeof' unaryExpr -> ^(SIZEOF_EXPR $un)
-	| 'sizeof' '(' tn=typeName ')' -> ^(SIZEOF_TYPE $tn)
+	'*' unaryExpr -> ^(DEREF unaryExpr)
+	| '&' unaryExpr -> ^(REF unaryExpr)
+	| '+' unaryExpr -> ^(U_PLUS unaryExpr)
+	| '-' unaryExpr -> ^(U_MINUS unaryExpr)
+	| '!' unaryExpr -> ^(BOOL_NOT unaryExpr)
+	| '~' unaryExpr -> ^(BIT_NOT unaryExpr)
+	| '++' unaryExpr -> ^(INC_PRE unaryExpr)
+	| '--' unaryExpr -> ^(DEC_PRE unaryExpr)
+	| '(' typeSpec ')' unaryExpr -> ^(TYPECAST unaryExpr typeSpec)
+	| SizeOf unaryExpr -> ^(SIZEOF_EXPR unaryExpr)
+	| SizeOf '(' typeSpec ')' -> ^(SIZEOF_TYPE typeSpec)
 	| primaryExpr
 
 ;
@@ -385,10 +396,10 @@ primaryExpr:
 */
 
 basicExpr:
-	'(' e=expr ')' -> $e
+	'('! expr ')'!
 	| identifier //-> IDENT<IdentAstNode>[$identifier.Text]
 	| Number //-> NUMBER<NumAstNode>[$Number.Text]
-	| f=identifier '(' paramList ')' -> ^(FUNC_CALL $f paramList)
+	| identifier '(' paramList ')' -> ^(FUNC_CALL identifier paramList)
 ;
 
 
@@ -433,7 +444,7 @@ binaryOperator:
 //	| '='  -> ^(ASSIGN)
 ;
 
-typeName:
+typeSpec:
 	identifier
 ;
 
@@ -441,10 +452,12 @@ funcCall:
 	identifier '(' paramList ')' -> ^(FUNC_CALL identifier paramList)
 ;
 
+programStatement:
+	varDef | funcDecl | funcDef
+;
+
 program: 
-	(varDef
-	| funcDecl
-	| funcDef)* EOF
-	-> ^(PROGRAM varDef* funcDecl* funcDef*)
+	programStatement* EOF
+	-> ^(PROGRAM programStatement*)
 ;
 

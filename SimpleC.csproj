@@ -47,6 +47,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IdentAstNode.cs" />
+    <Compile Include="Tree\RootNode.cs" />
+    <Compile Include="Tree\TypeSpecNode.cs" />
+    <Compile Include="Tree\VarSpecNode.cs" />
+    <Compile Include="Tree\ISCNode.cs" />
+    <Compile Include="Tree\VarDefNode.cs" />
     <Compile Include="TypeSpec.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ParserBaseException.cs" />
@@ -67,16 +72,18 @@
   </ItemGroup>
   <PropertyGroup>
     <AntlrGrammarFile>"Grammar\SimpleC.g"</AntlrGrammarFile>
+    <AntlrTreeGrammarFile>"Grammar\SimpleCTreeWalker.g"</AntlrTreeGrammarFile>
   </PropertyGroup>
   <ItemGroup>
     <AntlrGrammarFile Include="Grammar\SimpleC.g" />
+    <AntlrTreeGrammarFile Include="Grammar\SimpleCTreeWalker.g" />
   </ItemGroup>
   <PropertyGroup>
     <AntlrLexerFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Lexer.cs')</AntlrLexerFile>
     <AntlrParserFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename)Parser.cs')</AntlrParserFile>
+    <AntlrTreeWalkerFile>@(AntlrTreeGrammarFile->'%(RelativeDir)%(Filename).cs')</AntlrTreeWalkerFile>
     <AntlrTokensFile>@(AntlrGrammarFile->'%(RelativeDir)%(Filename).tokens')</AntlrTokensFile>
     <AntlrGrammarEncoding>Windows-1251</AntlrGrammarEncoding>
-    <AntlrTempGrammarFile>$(AntlrGrammarFile)</AntlrTempGrammarFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(AntlrLexerFile)">
@@ -89,13 +96,19 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>@(AntlrGrammarFile)</DependentUpon>
     </Compile>
+    <Compile Include="$(AntlrTreeWalkerFile)">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>@(AntlrTreeGrammarFile)</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Target Name="GenerateAntlrCode" Inputs="@(AntlrGrammarFile)" Outputs="$(AntlrLexerFile);$(AntlrParserFile)">
     <Exec Command="&quot;%JAVA_HOME%\bin\java&quot; -classpath lib\java\antlr-3.2.jar org.antlr.Tool -message-format vs2005 $(AntlrGrammarFile)" />
+    <Exec Command="&quot;%JAVA_HOME%\bin\java&quot; -classpath lib\java\antlr-3.2.jar org.antlr.Tool -message-format vs2005 $(AntlrTreeGrammarFile)" />
     <Delete Files="$(AntlrTokensFile)" />
   </Target>
   <Target Name="CleanAntlrCode">
-    <Delete Files="$(AntlrLexerFile);$(AntlrParserFile)" />
+    <Delete Files="$(AntlrLexerFile);$(AntlrParserFile);$(AntlrTreeWalkerFile)" />
   </Target>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

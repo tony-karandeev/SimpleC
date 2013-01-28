@@ -19,6 +19,7 @@ rem set ANTLR=%JAVA% -classpath .;%CLASSPATH%;%ANTLR_JAR% org.antlr.Tool
 
 del .\Grammar\SimpleCLexer.cs
 del .\Grammar\SimpleCParser.cs
+del .\Grammar\SimpleCTreeWalker.cs
 
 devenv SimpleC.csproj /build
 

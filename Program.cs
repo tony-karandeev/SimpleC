@@ -25,9 +25,13 @@ namespace SimpleC
 				CommonTokenStream tokens = new CommonTokenStream(lexer);
 				SimpleCParser parser = new SimpleCParser(tokens);
 				ITree program = (ITree)parser.program().Tree;
-				AstNodePrinter.Print(program);
-				Console.WriteLine();
+//				AstNodePrinter.Print(program);
+//				Console.WriteLine();
 //				SimpleCIntepreter.Execute(program);
+
+				CommonTreeNodeStream stream = new CommonTreeNodeStream(program);
+				
+
 				Console.ReadLine();
 			}
 			catch (Exception e)
