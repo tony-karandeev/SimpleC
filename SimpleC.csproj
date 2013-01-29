@@ -55,26 +55,31 @@
     <Compile Include="Grammar\SimpleCTreeWalker.g3.cs">
       <DependentUpon>SimpleCTreeWalker.g3</DependentUpon>
     </Compile>
-    <Compile Include="IdentAstNode.cs" />
+    <Compile Include="Interpreter\IntVariable.cs" />
+    <Compile Include="Interpreter\Scope.cs" />
+    <Compile Include="Tree\FuncDeclEquatable.cs" />
+    <Compile Include="Tree\FuncDeclsContainer.cs" />
+    <Compile Include="Interpreter\FuncDefsContainer.cs" />
+    <Compile Include="Interpreter\Interpreter.cs" />
+    <Compile Include="Tree\BinaryExprNode.cs" />
+    <Compile Include="Tree\CompoundStatementNode.cs" />
+    <Compile Include="Tree\FuncCallNode.cs" />
+    <Compile Include="Tree\FuncDeclNode.cs" />
+    <Compile Include="Tree\FuncDefNode.cs" />
+    <Compile Include="Tree\IdentNode.cs" />
+    <Compile Include="Tree\IExprNode.cs" />
+    <Compile Include="Tree\IntegerNode.cs" />
     <Compile Include="Tree\RootNode.cs" />
     <Compile Include="Tree\TypeSpecNode.cs" />
     <Compile Include="Tree\VarSpecNode.cs" />
     <Compile Include="Tree\ISCNode.cs" />
     <Compile Include="Tree\VarDefNode.cs" />
-    <Compile Include="TypeSpec.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ParserBaseException.cs" />
-    <Compile Include="IdentDescr.cs" />
     <Compile Include="SimpleCInterpreter.cs" />
-    <Compile Include="VarDescr.cs" />
     <Compile Include="AstNode.cs" />
-    <Compile Include="NumAstNode.cs" />
-    <Compile Include="VarDefAstNode.cs" />
     <Compile Include="AstNodePrinter.cs" />
-    <Compile Include="IntepreterException.cs" />
-    <Compile Include="VarSpecAstNode.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Interpreter\InterpreterException.cs" />
   </ItemGroup>
   <ItemGroup>
     <Antlr3 Include="Grammar\SimpleC.g3">

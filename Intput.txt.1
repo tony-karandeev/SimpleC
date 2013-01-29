@@ -1,6 +1,5 @@
 
 void g(int x);
-void println(int x);
 
 void f(int a, int b, int c, int d);
 
@@ -12,11 +11,7 @@ void main()
 void f(int a, int b, int c, int d)
 {
 	{
-		int a;
-		a = 100;
-		println(a);
+		
 	}
-	a = 22;
-	a = a * b + c % d;
-	println(a);
+		a = a * b + c % g(a);
 }

@@ -4,14 +4,24 @@ using System.Text;
 
 namespace SimpleC.Tree
 {
+	using SimpleC.Interpreter;
 	public class VarDefNode : ISCNode
 	{
+		public VarDefNode(VarSpecNode varSpec)
+		{
+			VarSpec = varSpec;
+		}
+
 		public VarSpecNode VarSpec { get; set; }
-	
-		// ISCNode member
+
+		// ISCNode members
+		public void Evaluate(Scope parentScope)
+		{
+		}
+
 		public void Print(string indent)
 		{
-			Console.WriteLine(indent + "VAR_DEF");
+			Console.WriteLine(indent + "VAR_DEF_NODE");
 			VarSpec.Print(indent + "\t");
 		}
 	}

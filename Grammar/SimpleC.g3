@@ -8,7 +8,7 @@ options {
 }
 
 tokens {
-    NUMBER              ;
+    INTEGER             ;
     IDENT               ;
 
     PROGRAM             ;
@@ -88,49 +88,33 @@ tokens {
 #pragma warning disable 3021
 }
 
-
-Whitespace:
-	( ' ' | '\t' | '\f' | '\r' | '\n' )+ {
-		$channel=Hidden;
-	}
+public
+program: 
+	programStatement* EOF
+	-> ^(PROGRAM programStatement*)
 ;
 
-Number: 
-	('0'..'9')+ ('.' ('0'..'9')+)?
-;
-
-SizeOf: 'sizeof';
-
-Identifier:  
-	( 'a'..'z' | 'A'..'Z' | '_' )
-	( 'a'..'z' | 'A'..'Z' | '_' | '0'..'9' )*
-;
-//ADD:    '+'     ;
-//SUB:    '-'     ;
-//MUL:    '*'     ;
-//DIV:    '/'     ;
-//ASSIGN: '='     ;
-
-identifier:
-	Identifier -> { 
-		adaptor.BecomeRoot(new CommonToken(IDENT, $Identifier.Text), adaptor.Nil()) 
-	}
+programStatement:
+	varDef | funcDecl | funcDef
 ;
 
 varDef:
 	varSpec ';'
 		-> ^(VAR_DEF varSpec)
-		 	// { VarSpec vs = ((VarSpecAstNode)$varSpec.tree).VarSpec; }
-//		->  VAR_DEF<VarDefAstNode>[((VarSpecAstNode)$varSpec.tree).VarSpec]
 ;
 
 funcDecl: 
-	typeSpec identifier '(' paramSpecList ')'';' -> ^(FUNC_DECL typeSpec identifier paramSpecList)
+	typeSpec identifier '(' paramSpecList ')'';' 
+		-> ^(FUNC_DECL typeSpec identifier paramSpecList)
 ;
 
 funcDef:
 	typeSpec identifier '(' paramSpecList ')''{' funcBody '}' 
 		-> ^(FUNC_DEF typeSpec identifier paramSpecList funcBody)
+;
+
+paramSpecList:
+	(varSpec (',' varSpec)*)? -> ^(PARAM_SPEC_LIST varSpec*)
 ;
 
 funcBody:
@@ -141,24 +125,23 @@ statements:
 	statement*
 ;
 
-paramSpecList:
-	(varSpec (',' varSpec)*)? -> ^(PARAM_SPEC_LIST varSpec*)
+statement:
+	varDef
+	| expr? ';' -> ^(STATEMENT expr?)
+	| '{' statements '}' -> ^(STATEMENT statements?)
 ;
 
 varSpec:
     typeSpec identifier
 		-> ^(VAR_SPEC typeSpec identifier)
-//		-> VAR_SPEC<VarSpecAstNode>[new TypeSpec($typeSpec.text), $identifier.Text]
+;
+
+typeSpec:
+	(tn=Int | tn=Void) -> ^(TYPE_SPEC { adaptor.BecomeRoot(new CommonToken(IDENT, $tn.Text), adaptor.Nil()) })
 ;
 
 paramList:
 	(expr (',' expr)*)? -> ^(PARAM_LIST expr*)
-;
-
-statement:
-	varDef
-	| expr? ';' -> ^(STATEMENT expr?)
-	| '{' statements '}' -> ^(STATEMENT statements?)
 ;
 
 expr:
@@ -241,11 +224,14 @@ primaryExpr:
 
 basicExpr:
 	'('! expr ')'!
-	| identifier //-> IDENT<IdentAstNode>[$identifier.Text]
-	| Number //-> NUMBER<NumAstNode>[$Number.Text]
-	| identifier '(' paramList ')' -> ^(FUNC_CALL identifier paramList)
+	| identifier 
+	| integer 
+	| funcCall
 ;
 
+funcCall:
+	identifier '(' paramList ')' -> ^(FUNC_CALL identifier paramList)
+;
 
 binaryOperator:
 	ADD
@@ -253,56 +239,59 @@ binaryOperator:
 	| MUL
 	| DIV
 	| MOD
-	| SHIFT_LEFT
-	| SHIFT_RIGHT
+//	| SHIFT_LEFT
+//	| SHIFT_RIGHT
 	| ASSIGN
-	| GREATER
-	| GREATER_OR_EQUAL
-	| LESS
-	| LESS_OR_EQUAL
-	| EQUAL
-	| NOT_EQUAL
-	| BOOL_AND
-	| BOOL_OR
-	| BIT_AND
-	| BIT_OR
-	| BIT_XOR
-//	'*'    -> ^(MUL)
-//	| '/'  -> ^(DIV)
-//	| '%'  -> ^(MOD)
-//	| '+'  -> ^(ADD)
-//	| '-'  -> ^(SUB)
-//	| '>>' -> ^(SHIFT_RIGHT)
-//	| '<<' -> ^(SHIFT_LEFT)
-//	| '>'  -> ^(GREATER)
-//	| '<'  -> ^(LESS)
-//	| '>=' -> ^(GREATER_OR_EQUAL)
-//	| '<=' -> ^(LESS_OR_EQUAL)
-//	| '==' -> ^(EQUAL)
-//	| '!=' -> ^(NOT_EQUAL)
-//	| '&'  -> ^(BIT_AND)
-//	| '^'  -> ^(BIT_XOR)
-//	| '|'  -> ^(BIT_OR)
-//	| '&&' -> ^(BOOL_AND)
-//	| '||' -> ^(BOOL_OR)
-//	| '='  -> ^(ASSIGN)
+//	| GREATER
+//	| GREATER_OR_EQUAL
+//	| LESS
+//	| LESS_OR_EQUAL
+//	| EQUAL
+//	| NOT_EQUAL
+//	| BOOL_AND
+//	| BOOL_OR
+//	| BIT_AND
+//	| BIT_OR
+//	| BIT_XOR
 ;
 
-typeSpec:
-	identifier -> ^(TYPE_SPEC identifier)
+
+identifier:
+	Identifier -> { 
+		adaptor.BecomeRoot(new CommonToken(IDENT, $Identifier.Text), adaptor.Nil()) 
+	}
 ;
 
-funcCall:
-	identifier '(' paramList ')' -> ^(FUNC_CALL identifier paramList)
+integer:
+	Integer -> {
+		adaptor.BecomeRoot(new CommonToken(INTEGER, $Integer.Text), adaptor.Nil()) 
+	}
 ;
 
-programStatement:
-	varDef | funcDecl | funcDef
+Whitespace:
+	( ' ' | '\t' | '\f' | '\r' | '\n' )+ {
+		$channel=Hidden;
+	}
 ;
 
-public
-program: 
-	programStatement* EOF
-	-> ^(PROGRAM programStatement*)
+Integer: 
+	('0'..'9')+
 ;
+
+SizeOf: 'sizeof';
+
+Int: 'int';
+
+Void: 'void';
+
+Identifier:  
+	( 'a'..'z' | 'A'..'Z' | '_' )
+	( 'a'..'z' | 'A'..'Z' | '_' | '0'..'9' )*
+;
+//ADD:    '+'     ;
+//SUB:    '-'     ;
+//MUL:    '*'     ;
+//DIV:    '/'     ;
+//ASSIGN: '='     ;
+
 

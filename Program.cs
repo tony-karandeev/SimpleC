@@ -34,11 +34,15 @@ namespace SimpleC
 				Grammar.SimpleCTreeWalker treeWalker = new Grammar.SimpleCTreeWalker(nodeStream);
 				Tree.RootNode rootNode = treeWalker.walk();
 
+#if false
 				if (rootNode == null)
 					Console.WriteLine("NULL");
 				else
 					rootNode.Print();
-
+#else
+				Interpreter.Interpreter.Shared.Prepare(rootNode);
+				Interpreter.Interpreter.Shared.Run();
+#endif
 				Console.ReadLine();
 			}
 			catch (Exception e)

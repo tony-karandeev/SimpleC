@@ -24,27 +24,42 @@ walk returns [RootNode node]
 
 programStatement returns [ISCNode node]
 	: varDef { node = $varDef.node; }
-	| funcDecl
-	| funcDef
+	| funcDecl { 
+		FuncDeclNode funcDeclNode = $funcDecl.node;
+		node = funcDeclNode; 
+		funcDeclarations_.Add(funcDeclNode);
+	}
+	| funcDef { 
+		FuncDefNode funcDefNode = $funcDef.node;
+		node = funcDefNode; 
+		funcDeclarations_.Add(funcDefNode);
+	}
 ;
 
-varDef returns [VarDefNode node]
+varDef returns [VarDefNode node]:
+	^(VAR_DEF varSpec) { node = new VarDefNode($varSpec.node); }
+;
+
+funcDecl returns [FuncDeclNode node]
 @init {
-	node = new VarDefNode();
-}	: 
-	^(VAR_DEF varSpec) { node.VarSpec = $varSpec.node; }
+	node = new FuncDeclNode();
+}	:
+	^(FUNC_DECL 
+		typeSpec { node.ReturnTypeSpec = $typeSpec.node; } 
+		IDENT { node.Name = $IDENT.Text; }
+		^(PARAM_SPEC_LIST (varSpec { node.Parameters.Add($varSpec.node); })*)
+	)
 ;
 
-funcDecl:
-	^(FUNC_DECL typeSpec IDENT paramSpecList)
-;
-
-funcDef:
-	^(FUNC_DEF typeSpec IDENT paramSpecList funcBody)
-;
-
-paramSpecList:
-	^(PARAM_SPEC_LIST varSpec*)
+funcDef returns [FuncDefNode node]
+@init {
+	node = new FuncDefNode();
+}	:
+	^(FUNC_DEF 
+		typeSpec { node.ReturnTypeSpec = $typeSpec.node; }
+		IDENT { node.Name = $IDENT.Text; }
+		^(PARAM_SPEC_LIST (varSpec { node.Parameters.Add($varSpec.node); })*) 
+		funcBody { node.Body = $funcBody.node; })
 ;
 
 varSpec returns [VarSpecNode node]
@@ -66,38 +81,48 @@ typeSpec returns [TypeSpecNode node]
 	}
 ;
 
-funcBody:
-	^(FUNC_BODY statement*)
+funcBody returns [CompoundStatementNode node]
+@init {
+	node = new CompoundStatementNode();
+}	:
+	^(FUNC_BODY (statement { node.Statements.Add($statement.node); })*)
 ;
 
-statement:
-	varDef
-	| ^(STATEMENT expression?)
-//	| ^(STATEMENT statement*)
+statement returns [ISCNode node]:
+	varDef { node = $varDef.node; }
+	| STATEMENT { node = new CompoundStatementNode(); } // This simulates an empty statement
+	| ^(STATEMENT expression) { node = $expression.node; }
+	| ^(STATEMENT { 
+		node = new CompoundStatementNode(); 
+		CompoundStatementNode compoundNode = (CompoundStatementNode)node; }	
+				(st=statement { compoundNode.Statements.Add($st.node); })+)
 ;	
 
-expression:
+expression returns [IExprNode node]:
 	// Binary expressions
-	^(ADD expression expression)
-	| ^(SUB expression expression)
-	| ^(MUL expression expression)
-	| ^(DIV expression expression)
-	| ^(MOD expression expression)
-	| ^(SHIFT_LEFT expression expression)
-	| ^(SHIFT_RIGHT expression expression)
-	| ^(ASSIGN expression expression)
-	| ^(GREATER expression expression)
-	| ^(GREATER_OR_EQUAL expression expression)
-	| ^(LESS expression expression)
-	| ^(LESS_OR_EQUAL expression expression)
-	| ^(EQUAL expression expression)
-	| ^(NOT_EQUAL expression expression)
-	| ^(BOOL_AND expression expression)
-	| ^(BOOL_OR expression expression)
-	| ^(BIT_AND expression expression)
-	| ^(BIT_OR expression expression)
-	| ^(BIT_XOR expression expression)
+	(
+		^(type=ADD left=expression right=expression)
+		| ^(type=SUB left=expression right=expression)
+		| ^(type=MUL left=expression right=expression)
+		| ^(type=DIV left=expression right=expression)
+		| ^(type=MOD left=expression right=expression)
+		| ^(type=SHIFT_LEFT left=expression right=expression)
+		| ^(type=SHIFT_RIGHT left=expression right=expression)
+		| ^(type=ASSIGN left=expression right=expression)
+		| ^(type=GREATER left=expression right=expression)
+		| ^(type=GREATER_OR_EQUAL left=expression right=expression)
+		| ^(type=LESS left=expression right=expression)
+		| ^(type=LESS_OR_EQUAL left=expression right=expression)
+		| ^(type=EQUAL left=expression right=expression)
+		| ^(type=NOT_EQUAL left=expression right=expression)
+		| ^(type=BOOL_AND left=expression right=expression)
+		| ^(type=BOOL_OR left=expression right=expression)
+		| ^(type=BIT_AND left=expression right=expression)
+		| ^(type=BIT_OR left=expression right=expression)
+		| ^(type=BIT_XOR left=expression right=expression)
+	) { node = new BinaryExprNode($type.Type, $left.node, $right.node); }
 
+/*
 	// Unary expressions
 	| ^(DEREF expression)
 	| ^(REF expression)
@@ -119,12 +144,41 @@ expression:
 	| ^(DEC_POST expression)
 
 	// Basic expressions
-	| IDENT
-	// Commenting the NUMBER intentionally
-	// | NUMBER
-	| ^(FUNC_CALL IDENT paramList)
-;
+*/
+	| IDENT { 
+		node = new IdentNode();
+		(node as IdentNode).Name = $IDENT.Text;
+	}
+	| INTEGER {
+		node = new IntegerNode($INTEGER.Text);
+	}
+	| ^(FUNC_CALL {
+			List<IExprNode> parameters = new List<IExprNode>();
+		} 
+			IDENT {
+				if (!funcDeclarations_.Contains(new FuncDeclEquatable($IDENT.Text)))
+					ReportError(ErrorCode.UndeclaredFunctionCall);
+			} 
+			^(PARAM_LIST (parameter=expression { parameters.Add($parameter.node); })*)) {
 
-paramList:
-	^(PARAM_LIST expression*)
+		FuncCallNode funcCallNode = new FuncCallNode();
+		node = funcCallNode;
+		funcCallNode.Function = funcDeclarations_.Get(new FuncDeclEquatable($IDENT.Text));
+
+		// Check parameters
+		switch(FuncCallNode.ParameterListMatches(funcCallNode.Function.Parameters, parameters))
+		{
+			case FuncCallNode.ParameterMatching.ParameterCountMismatch:
+				ReportError(ErrorCode.ParameterCountMismatch);
+				break;
+			case FuncCallNode.ParameterMatching.ParameterTypeMismatch:
+				ReportError(ErrorCode.ParameterTypeMismatch);
+				break;
+			default:
+				// There is no error so do nothing
+				break;
+		}
+
+		funcCallNode.Parameters = parameters;
+	}
 ;

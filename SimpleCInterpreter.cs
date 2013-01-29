@@ -21,7 +21,7 @@ namespace SimpleC
 			if (programNode.Type != AstNodeType.PROGRAM)
 			{
 				Console.Error.WriteLine(String.Format("Node: {0}", Grammar.SimpleCParser.tokenNames[programNode.Type]));
-				throw new IntepreterException("AST-дерево не является программой");
+				throw new Interpreter.InterpreterException("AST-дерево не является программой");
 			}
 
             this.programNode = programNode;
@@ -30,9 +30,10 @@ namespace SimpleC
 
         private double ExecuteNode(ITree node)
         {
+#if false
             switch (node.Type)
             {
-                case AstNodeType.NUMBER:
+                case AstNodeType.INTEGER:
                     return ((NumAstNode)node).Value;
 
 #if (false)
@@ -71,7 +72,7 @@ namespace SimpleC
                 default:
                     throw new IntepreterException("Неизвестный тип узла AST-дерева");
             }
-
+#endif
             return 0;
         }
 
